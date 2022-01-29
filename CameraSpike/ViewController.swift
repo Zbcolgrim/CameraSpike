@@ -31,8 +31,8 @@ class ViewController: UIViewController, PHPickerViewControllerDelegate, UICollec
     
     private var images: [UIImage] = []
     private let collectionView: UICollectionView = {
-        
         let layout = UICollectionViewFlowLayout()
+        layout.itemSize = CGSize(width: 150, height: 150)
         
         let c = UICollectionView(frame: .zero, collectionViewLayout: layout)
         c.register(MyCell.self, forCellWithReuseIdentifier: "cell")
@@ -73,13 +73,21 @@ class ViewController: UIViewController, PHPickerViewControllerDelegate, UICollec
     func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
         picker.dismiss(animated: true, completion: nil)
         self.images = []
+        let group = DispatchGroup()
             results.forEach { result in
+                group.enter()
                 result.itemProvider.loadObject(ofClass: UIImage.self) { item, _ in
+                    defer {
+                        group.leave()
+                    }
                     DispatchQueue.main.async {
                     if let item = item as? UIImage {
-                        self.images.append(item)   
+                        self.images.append(item)
                     }
                 }
+                    group.notify(queue: .main) {
+                        self.collectionView.reloadData()
+                    }
                 
                 
             }
